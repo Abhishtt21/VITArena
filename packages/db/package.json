@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "db:generate": "pnpm dlx prisma generate",
     "db:migrate": "pnpm dlx prisma migrate dev",
-    "db:seed": "pnpm dlx prisma db seed"
+    "db:seed": "pnpm dlx prisma db seed",
+    "db:question":"pnpm dlx ts-node prisma/updateQuestion.ts"
   },
   "prisma": {
     "seed": "pnpm dlx ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"

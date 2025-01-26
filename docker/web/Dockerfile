@@ -26,5 +26,6 @@ EXPOSE 3000
 
 WORKDIR /usr/src/app/apps/web
 
-# Command to start the service
+# Command to start both services
+RUN pnpm run build 
 CMD ["pnpm", "run", "start"]

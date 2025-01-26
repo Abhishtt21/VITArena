@@ -1,62 +1,76 @@
 import { LANGUAGE_MAPPING } from "@repo/common/language";
 import fs from "fs";
+import path from "path";
 import prismaClient from "../src";
 
-const MOUNT_PATH = process.env.MOUNT_PATH ?? "../../apps/problems";
-function promisifedReadFile(path: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    fs.readFile(path, "utf8", (err, data) => {
-      if (err) {
-        reject(err);
-      }
-      resolve(data);
-    });
-  });
-}
+const prisma = prismaClient;
+const MOUNT_PATH = process.env.MOUNT_PATH ?? "C:/Users/abhis/Downloads/algorithmic-arena-main/algorithmic-arena-main/apps/problems";
 
 async function main(problemSlug: string, problemTitle: string) {
-  const problemStatement = await promisifedReadFile(
-    `${MOUNT_PATH}/${problemSlug}/Problem.md`
-  );
+  console.log(`Updating problem: ${problemSlug} - ${problemTitle}`);
 
-  const problem = await prismaClient.problem.upsert({
-    where: {
-      slug: problemSlug,
-    },
-    create: {
-      title: problemSlug,
-      slug: problemSlug,
-      description: problemStatement,
-      hidden: false,
-    },
-    update: {
-      description: problemStatement,
-    },
-  });
+  try {
+    const problemStatement = await promisifedReadFile(
+      path.join(MOUNT_PATH, `${problemSlug}/Problem.md`)
+    );
 
-  await Promise.all(
-    Object.keys(LANGUAGE_MAPPING).map(async (language) => {
-      const code = await promisifedReadFile(
-        `${MOUNT_PATH}/${problemSlug}/boilerplate/function.${language}`
-      );
-      await prismaClient.defaultCode.upsert({
-        where: {
-          problemId_languageId: {
+    const problem = await prisma.problem.upsert({
+      where: {
+        slug: problemSlug,
+      },
+      create: {
+        title: problemTitle,
+        slug: problemSlug,
+        description: problemStatement,
+        hidden: false,
+      },
+      update: {
+        description: problemStatement,
+      },
+    });
+
+    console.log(`Problem upserted successfully: ${problemSlug}`);
+
+    await Promise.all(
+      Object.keys(LANGUAGE_MAPPING).map(async (language) => {
+        const code = await promisifedReadFile(
+          path.join(MOUNT_PATH, `${problemSlug}/boilerplate/function.${language}`)
+        );
+        await prisma.defaultCode.upsert({
+          where: {
+            problemId_languageId: {
+              problemId: problem.id,
+              languageId: LANGUAGE_MAPPING[language].internal,
+            },
+          },
+          create: {
             problemId: problem.id,
             languageId: LANGUAGE_MAPPING[language].internal,
+            code,
           },
-        },
-        create: {
-          problemId: problem.id,
-          languageId: LANGUAGE_MAPPING[language].internal,
-          code,
-        },
-        update: {
-          code,
-        },
-      });
-    })
-  );
+          update: {
+            code,
+          },
+        });
+      })
+    );
+
+    console.log(`Boilerplate code upserted successfully for: ${problemSlug}`);
+  } catch (error) {
+    console.error(`Error updating problem ${problemSlug}:`, error);
+  }
+}
+
+function promisifedReadFile(filePath: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    fs.readFile(filePath, { encoding: "utf-8" }, (err, data) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(data);
+      }
+    });
+  });
 }
 
 export function addProblemsInDB() {
@@ -66,7 +80,10 @@ export function addProblemsInDB() {
       return;
     }
     dirs.forEach(async (dir) => {
+      console.log(`Processing directory: ${dir}`);
       await main(dir, dir);
     });
   });
 }
+
+addProblemsInDB();
