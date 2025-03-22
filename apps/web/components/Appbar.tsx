@@ -37,7 +37,7 @@ export function Appbar() {
       {!isLoading && !session?.user && (
         <div className="flex items-center gap-4">
         <ModeToggle />
-        <Button onClick={() => signIn()}>Sign in</Button>
+        <Button onClick={() => signIn(undefined, { callbackUrl: "/auth/signin" })}>Sign in</Button>
         </div>
       
       )}

@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
       })),
     }
   );
-
+  console.log(response);
   const submission = await db.submission.create({
     data: {
       userId: session.user.id,

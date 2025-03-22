@@ -1,21 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../lib/auth";
+import {getUserRole} from "../../lib/user";
 import fs from 'fs';
 import path from 'path';
 import { spawn } from 'child_process';
 import { db } from "../../db"; // Ensure the correct import path
 
+interface Field {
+  type: string;
+  name: string;
+}
+
 export async function POST(req: NextRequest) {
     // Uncomment and use session validation if needed
-    // const session = await getServerSession(authOptions);
-    // if (!session?.user) {
-    //     return NextResponse.json({
-    //         message: "You must be logged in to add a problem",
-    //     }, {
-    //         status: 401,
-    //     });
-    // }
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+        return NextResponse.json({
+            message: "You must be logged in to add a problem",
+        }, {
+            status: 401,
+        });
+    }
+
+    // Check if the user is an admin
+    const userRole = await getUserRole(session.user.id);
+    if (userRole !== 'ADMIN') {
+        console.log(session.user);
+        return NextResponse.json({
+            message: "You do not have permission to add a problem",
+        }, {
+            status: 403,
+        });
+    }
 
     const { title, description, difficulty, slug, testCases, functionName, inputFields, outputFields } = await req.json();
 
@@ -25,7 +42,7 @@ export async function POST(req: NextRequest) {
 
 ${description}
 
-${testCases.map((tc, index) => `
+${testCases.map((tc: any, index: number) => `
 #### Test case ${index + 1}
 
 Input
@@ -39,8 +56,7 @@ Output
 \`\`\`
 ${tc.output}
 \`\`\`
-`).join('\n')}
-    `;
+`).join('\n')}`.trim();
 
     // Insert the problem into the database
     try {
@@ -54,7 +70,7 @@ ${tc.output}
             }
         });
         console.log('Problem inserted into the database successfully');
-    } catch (error) {
+    } catch (error: any) {
         console.error(`Error inserting problem into the database: ${error.message}`);
         return NextResponse.json({
             message: "Error inserting problem into the database",
@@ -69,14 +85,13 @@ ${tc.output}
         fs.mkdirSync(problemDir, { recursive: true });
 
         // Create structure.md file
-        const structureMdContent = `
-Problem Name: "${title}"
+        const structureMdContent = `Problem Name: "${title}"
 Function Name: ${functionName}
 Input Structure:
-${inputFields.map(field => `Input Field: ${field.type} ${field.name}`).join('\n')}
+${inputFields.map((field: Field) => `Input Field: ${field.type} ${field.name}`).join('\n')}
 Output Structure:
-${outputFields.map(field => `Output Field: ${field.type} ${field.name}`).join('\n')}
-        `;
+${outputFields.map((field: Field) => `Output Field: ${field.type} ${field.name}`).join('\n')}
+`;
         fs.writeFileSync(path.join(problemDir, 'structure.md'), structureMdContent);
 
         // Create Problem.md file
@@ -98,7 +113,7 @@ ${outputFields.map(field => `Output Field: ${field.type} ${field.name}`).join('\
             // Save output
             fs.writeFileSync(path.join(outputsDir, `${index}.txt`), output);
         }
-    } catch (error) {
+    } catch (error: any) {
         console.error(`Error creating files: ${error.message}`);
         return NextResponse.json({
             message: "Error creating files",
@@ -119,15 +134,15 @@ ${outputFields.map(field => `Output Field: ${field.type} ${field.name}`).join('\
             shell: true
         });
 
-        generatorProcess.stdout.on('data', (data) => {
+        generatorProcess.stdout.on('data', (data:   any) => {
             console.log(`stdout: ${data}`);
         });
 
-        generatorProcess.stderr.on('data', (data) => {
+        generatorProcess.stderr.on('data', (data: any) => {
             console.error(`stderr: ${data}`);
         });
 
-        generatorProcess.on('close', (code) => {
+        generatorProcess.on('close', (code: number) => {
             if (code !== 0) {
                 console.error(`Generator process exited with code ${code}`);
                 return NextResponse.json({
@@ -146,15 +161,15 @@ ${outputFields.map(field => `Output Field: ${field.type} ${field.name}`).join('\
                     shell: true
                 });
 
-                updateProcess.stdout.on('data', (data) => {
+                updateProcess.stdout.on('data', (data: any) => {
                     console.log(`stdout: ${data}`);
                 });
 
-                updateProcess.stderr.on('data', (data) => {
+                updateProcess.stderr.on('data', (data: any) => {
                     console.error(`stderr: ${data}`);
                 });
 
-                updateProcess.on('close', (code) => {
+                updateProcess.on('close', (code: number) => {
                     if (code !== 0) {
                         console.error(`Update process exited with code ${code}`);
                         return NextResponse.json({
@@ -170,7 +185,7 @@ ${outputFields.map(field => `Output Field: ${field.type} ${field.name}`).join('\
                         status: 201,
                     });
                 });
-            } catch (error) {
+            } catch (error: any) {
                 console.error(`Error updating database: ${error.message}`);
                 return NextResponse.json({
                     message: "Error updating database",
@@ -179,7 +194,7 @@ ${outputFields.map(field => `Output Field: ${field.type} ${field.name}`).join('\
                 });
             }
         });
-    } catch (error) {
+    } catch (error : any) {
         console.error(`Error generating boilerplate code: ${error.message}`);
         return NextResponse.json({
             message: "Error generating boilerplate code",

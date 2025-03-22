@@ -13,6 +13,10 @@ model User {
   name               String?
   token              String?
   password           String
+  otp                String?
+  otpExpiry          DateTime?
+  resetToken         String?             @db.Text
+  resetTokenExpiry   DateTime?
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
   contestSubmissions ContestSubmission[]
@@ -184,7 +188,7 @@ model submissions {
   time                                       Decimal?    @db.Decimal
   memory                                     Int?
   stderr                                     String?
-  token                                      String?     @db.VarChar @unique
+  token                                      String?     @unique @db.VarChar
   number_of_runs                             Int?
   cpu_time_limit                             Decimal?    @db.Decimal
   cpu_extra_time                             Decimal?    @db.Decimal
