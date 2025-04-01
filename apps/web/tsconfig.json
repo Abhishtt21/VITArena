@@ -6,9 +6,11 @@
         "name": "next"
       }
     ],
-    "jsx": "preserve"
+    "jsx": "preserve",
+    "typeRoots": ["./types", "./node_modules/@types"]
   },
   "include": [
+    "types/**/*.ts",
     "next-env.d.ts",
     "next.config.js",
     "**/*.ts",
@@ -19,3 +21,4 @@
     "node_modules"
   ]
 }
+

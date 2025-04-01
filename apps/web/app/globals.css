@@ -74,3 +74,25 @@
       @apply bg-background text-foreground;
     }
   }
+
+  .remote-cursor {
+    background-color: #ff0000;
+    width: 2px !important;
+    height: 18px !important;
+    position: absolute;
+  }
+
+  .remote-cursor::after {
+    content: attr(data-hover);
+    position: absolute;
+    top: -18px;
+    left: 0;
+    background: inherit;
+    padding: 2px 4px;
+    border-radius: 2px;
+    color: white;
+    font-size: 12px;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+

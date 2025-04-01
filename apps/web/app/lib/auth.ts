@@ -4,43 +4,36 @@ import bcrypt from "bcrypt";
 import { NextAuthOptions } from "next-auth";
 import { JWT } from "next-auth/jwt";
 import { JWTPayload, SignJWT, importJWK } from "jose";
-import { Session } from "next-auth";
+import NextAuth, { DefaultSession } from "next-auth";
 
-interface token extends JWT {
-  uid: string;
-  jwtToken: string;
-}
-
-export interface session extends Session {
-  user: {
+declare module "next-auth" {
+  interface User {
     id: string;
-    jwtToken: string;
-    email: string;
     name: string;
-  };
-}
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  token: string;
+    email: string;
+    token: string;
+    role: string;
+  }
+
+  interface Session {
+    user: User & {
+      jwtToken: string;
+    }
+  }
 }
 
 const generateJWT = async (payload: JWTPayload) => {
   const secret = process.env.JWT_SECRET || "secret";
-
   const jwk = await importJWK({ k: secret, alg: "HS256", kty: "oct" });
-
   const jwt = await new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("365d")
     .sign(jwk);
-
   return jwt;
 };
 
-export const authOptions = {
+export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -51,8 +44,8 @@ export const authOptions = {
         mode: { label: "mode", type: "text", placeholder: "" },
         otp: { label: "otp", type: "text", placeholder: "" },
       },
-      async authorize(credentials: any) {
-        if (!credentials.username || !credentials.password) {
+      async authorize(credentials) {
+        if (!credentials?.username || !credentials?.password) {
           throw new Error("Email and password are required");
         }
 
@@ -84,7 +77,6 @@ export const authOptions = {
             throw new Error("Invalid OTP");
           }
 
-          // Clear OTP after successful verification
           await db.user.update({
             where: { email: credentials.username },
             data: { otp: null, otpExpiry: null },
@@ -94,7 +86,6 @@ export const authOptions = {
         }
 
         if (credentials.mode === "signup") {
-          // For signup, check if this is a temporary user (no password set)
           if (existingUser.password) {
             throw new Error("User already exists");
           }
@@ -116,8 +107,9 @@ export const authOptions = {
             const jwt = await generateJWT({ id: user.id });
             return {
               id: user.id,
-              name: user.name,
+              name: user.name || "",  // Ensure name is never null
               email: user.email,
+              role: user.role,
               token: jwt,
             };
           } catch (e) {
@@ -125,7 +117,6 @@ export const authOptions = {
           }
         }
 
-        // Handle Sign In
         if (!existingUser.password) {
           throw new Error("Please complete signup first");
         }
@@ -142,8 +133,9 @@ export const authOptions = {
         const jwt = await generateJWT({ id: existingUser.id });
         return {
           id: existingUser.id,
-          name: existingUser.name,
+          name: existingUser.name || "",  // Ensure name is never null
           email: existingUser.email,
+          role: existingUser.role,
           token: jwt,
         };
       },
@@ -157,27 +149,23 @@ export const authOptions = {
   
   callbacks: {
     session: async ({ session, token }) => {
-      const newSession: session = session as session;
-      if (newSession.user && token.uid) {
-        newSession.user.id = token.uid as string;
-        newSession.user.jwtToken = token.jwtToken as string;
+      if (session?.user) {
+        session.user.id = token.uid as string;
+        session.user.jwtToken = token.jwtToken as string;
+        session.user.role = token.role as string;
       }
-      return newSession!;
+      return session;
     },
-    jwt: async ({ token, user }): Promise<JWT> => {
-      const newToken = token;
-
+    jwt: async ({ token, user }) => {
       if (user) {
-        newToken.uid = user.id;
-        newToken.jwtToken = (user as User).token;
+        token.uid = user.id;
+        token.jwtToken = (user as any).token;
+        token.role = (user as any).role;
       }
-      return newToken;
-    },
-  },
-} satisfies NextAuthOptions;
-
-
-
+      return token;
+    }
+  }
+};
 
 
 

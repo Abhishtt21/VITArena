@@ -7,6 +7,7 @@ import "./globals.css";
 import { Appbar } from "../components/Appbar";
 import { Footer } from "../components/Footer";
 import { Providers,ThemeProvider } from "../providers";
+import { ActionButtons } from "../components/ActionButtons";
 
 const chivo = Chivo({
   subsets: ["latin"],
@@ -30,7 +31,9 @@ export default function RootLayout({
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
         <Providers>
           <Appbar />
-          {children}
+          <main>
+            {children}
+          </main>
           <Footer />
         </Providers>
       </ThemeProvider>
@@ -38,3 +41,5 @@ export default function RootLayout({
     </html>
   );
 }
+
+

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../lib/auth";
 import {getUserRole} from "../../lib/user";
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
 
     // Format the problem description with test cases
     const formattedDescription = `
-## ${title}
+### ${title}
 
 ${description}
 
@@ -56,7 +56,7 @@ Output
 \`\`\`
 ${tc.output}
 \`\`\`
-`).join('\n')}`.trim();
+`).join('\n')}`.trim(); // Ensure there are no trailing spaces
 
     // Insert the problem into the database
     try {

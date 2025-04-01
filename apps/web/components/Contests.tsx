@@ -24,6 +24,7 @@ export async function Contests() {
                 id={contest.id}
                 startTime={contest.startTime}
                 endTime={contest.endTime}
+                creatorId={contest.creatorId || ''}
               />
             ))}
           </div>
@@ -45,6 +46,7 @@ export async function Contests() {
                 id={contest.id}
                 startTime={contest.startTime}
                 endTime={contest.endTime}
+                creatorId={contest.creatorId || ''}
               />
             ))}
           </div>
@@ -53,3 +55,5 @@ export async function Contests() {
     </div>
   );
 }
+
+

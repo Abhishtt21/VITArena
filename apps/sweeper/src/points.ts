@@ -12,13 +12,18 @@ export const getPoints = async (
   startTime: Date,
   endTime: Date,
 ): Promise<number> => {
-  const now = new Date();
-  const timeDiff = Math.abs(endTime.getTime() - startTime.getTime());
   const points = POINT_MAPPING[difficulty || "EASY"];
   if(!points) return 0;
-  const totalPoints =
-    (((endTime.getTime() - now.getTime()) / timeDiff) * points) / 2 +
-    points / 2;
+  
+  // Calculate time taken from contest start to submission
+  const timeTaken = Math.abs(new Date().getTime() - startTime.getTime());
+  // Total contest duration
+  const contestDuration = Math.abs(endTime.getTime() - startTime.getTime());
+  
+  // Points formula: Base points * (1 + time bonus)
+  // Time bonus decreases linearly from 1 to 0 as time taken increases
+  const timeBonus = Math.max(0, (contestDuration - timeTaken) / contestDuration);
+  const totalPoints = points * (1 + timeBonus);
 
-  return totalPoints;
+  return Math.round(totalPoints);
 };

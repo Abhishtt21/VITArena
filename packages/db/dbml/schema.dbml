@@ -1,0 +1,270 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table User {
+  id String [pk]
+  email String [unique, not null]
+  name String
+  token String
+  password String [not null]
+  otp String
+  otpExpiry DateTime
+  resetToken String
+  resetTokenExpiry DateTime
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  contestSubmissions ContestSubmission [not null]
+  role UserRole [not null, default: 'USER']
+  submissions Submission [not null]
+  contestPoints ContestPoints [not null]
+  contestCreated Contest [not null]
+  InvitedUser InvitedUser [not null]
+}
+
+Table Contest {
+  id String [pk]
+  title String [not null]
+  description String [not null]
+  startTime DateTime [not null]
+  hidden Boolean [not null, default: true]
+  deleted Boolean [not null, default: false]
+  deletedAt DateTime
+  submissions Submission [not null]
+  endTime DateTime [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  problems ContestProblem [not null]
+  contestSubmissions ContestSubmission [not null]
+  leaderboard Boolean [not null, default: false]
+  creatorId String
+  creator User
+  isPrivate Boolean [not null, default: false]
+  inviteCode String [unique]
+  invitedUsers InvitedUser [not null]
+}
+
+Table ContestProblem {
+  id String [not null]
+  contestId String [not null]
+  problemId String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  contest Contest [not null]
+  problem Problem [not null]
+  index Int [not null]
+  solved Int [not null, default: 0]
+
+  indexes {
+    (contestId, problemId) [pk]
+  }
+}
+
+Table Problem {
+  id String [pk]
+  title String [not null]
+  description String [not null]
+  hidden Boolean [not null, default: true]
+  slug String [unique, not null]
+  solved Int [not null, default: 0]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  difficulty Difficulty [not null, default: 'MEDIUM']
+  contestSubmissions ContestSubmission [not null]
+  contests ContestProblem [not null]
+  submissions Submission [not null]
+  defaultCode DefaultCode [not null]
+}
+
+Table DefaultCode {
+  id String [pk]
+  languageId Int [not null]
+  problemId String [not null]
+  code String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  problem Problem [not null]
+  language Language [not null]
+
+  indexes {
+    (problemId, languageId) [unique]
+  }
+}
+
+Table Submission {
+  id String [pk]
+  problemId String [not null]
+  userId String [not null]
+  code String [not null]
+  activeContestId String
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime
+  status SubmissionResult [not null, default: 'PENDING']
+  memory Int
+  time Float
+  testcases submissions [not null]
+  activeContest Contest
+  user User [not null]
+  problem Problem [not null]
+}
+
+Table Language {
+  id Int [pk, increment]
+  name String [not null]
+  judge0Id Int [unique, not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  DefaultCode DefaultCode [not null]
+}
+
+Table ContestSubmission {
+  id String [pk]
+  userId String [not null]
+  problemId String [not null]
+  contestId String [not null]
+  submissionId String [not null]
+  points Int [not null]
+  user User [not null]
+  problem Problem [not null]
+  contest Contest [not null]
+
+  indexes {
+    (userId, problemId, contestId) [unique]
+  }
+}
+
+Table ContestPoints {
+  id String [pk]
+  contestId String [not null]
+  userId String [not null]
+  points Int [not null]
+  rank Int [not null]
+  user User [not null]
+
+  indexes {
+    (contestId, userId) [unique]
+  }
+}
+
+Table ar_internal_metadata {
+  key String [pk]
+  value String
+  created_at DateTime [not null]
+  updated_at DateTime [not null]
+}
+
+Table clients {
+  id String [pk]
+}
+
+Table languages {
+  id Int [pk, increment]
+  name String
+  compile_cmd String
+  run_cmd String
+  source_file String
+  is_archived Boolean [default: false]
+}
+
+Table schema_migrations {
+  version String [pk]
+}
+
+Table submissions {
+  id Int [pk, increment]
+  source_code String
+  language_id Int
+  stdin String
+  expected_output String
+  stdout String
+  status_id Int
+  created_at DateTime
+  finished_at DateTime
+  time Decimal
+  memory Int
+  stderr String
+  token String [unique]
+  number_of_runs Int
+  cpu_time_limit Decimal
+  cpu_extra_time Decimal
+  wall_time_limit Decimal
+  memory_limit Int
+  stack_limit Int
+  max_processes_and_or_threads Int
+  enable_per_process_and_thread_time_limit Boolean
+  enable_per_process_and_thread_memory_limit Boolean
+  max_file_size Int
+  compile_output String
+  exit_code Int
+  exit_signal Int
+  message String
+  wall_time Decimal
+  compiler_options String
+  command_line_arguments String
+  redirect_stderr_to_stdout Boolean
+  callback_url String
+  additional_files Bytes
+  enable_network Boolean
+  Submission Submission
+  submissionId String
+}
+
+Table InvitedUser {
+  id String [pk]
+  userId String [not null]
+  contestId String [not null]
+  user User [not null]
+  contest Contest [not null]
+  invitedAt DateTime [default: `now()`, not null]
+
+  indexes {
+    (userId, contestId) [unique]
+  }
+}
+
+Enum SubmissionResult {
+  AC
+  REJECTED
+  PENDING
+}
+
+Enum UserRole {
+  ADMIN
+  USER
+}
+
+Enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+Ref: Contest.creatorId > User.id [delete: Cascade]
+
+Ref: ContestProblem.contestId > Contest.id
+
+Ref: ContestProblem.problemId > Problem.id
+
+Ref: DefaultCode.problemId > Problem.id
+
+Ref: DefaultCode.languageId > Language.id
+
+Ref: Submission.activeContestId > Contest.id
+
+Ref: Submission.userId > User.id
+
+Ref: Submission.problemId > Problem.id
+
+Ref: ContestSubmission.userId > User.id
+
+Ref: ContestSubmission.problemId > Problem.id
+
+Ref: ContestSubmission.contestId > Contest.id
+
+Ref: ContestPoints.userId > User.id
+
+Ref: submissions.submissionId > Submission.id
+
+Ref: InvitedUser.userId > User.id [delete: Cascade]
+
+Ref: InvitedUser.contestId > Contest.id [delete: Cascade]

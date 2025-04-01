@@ -27,23 +27,14 @@ async function main(contestId: string) {
     (a, b) => b[1] - a[1],
   );
 
-  // clean existing leaderboard
-
-  await prisma.contest.update({
-    where: {
-      id: contestId,
-    },
-    data: {
-      leaderboard: false,
-    },
-  });
-
+  // Just clean existing points without touching the leaderboard flag
   await prisma.contestPoints.deleteMany({
     where: {
       contestId: contestId,
     },
   });
 
+  // Create new points
   await prisma.contestPoints.createMany({
     data: sortedUserPoints.map(([userId, points]) => ({
       userId,
@@ -52,15 +43,7 @@ async function main(contestId: string) {
       rank: sortedUserPoints.map((x) => x[0]).indexOf(userId) + 1,
     })),
   });
-
-  await prisma.contest.update({
-    where: {
-      id: contestId,
-    },
-    data: {
-      leaderboard: true,
-    },
-  });
 }
 
 main(process.env.CONTEST_ID!);
+

@@ -23,6 +23,16 @@ model User {
   role               UserRole            @default(USER)
   submissions        Submission[]
   contestPoints      ContestPoints[]
+  contestCreated     Contest[]
+  InvitedUser        InvitedUser[]
+  // Remove these collaboration-related fields
+  // createdRooms       CollaborationRoom[] @relation("RoomCreator")
+  // roomParticipations CollaborationUser[] @relation("RoomParticipant")
+  // roomInvites        InvitedRoomUser[]   @relation("RoomInvite")
+  // Remove commented out lines
+  // CollaborationUser  CollaborationUser[]
+  // CollaborationUser  CollaborationUser[]
+  // CollaborationUser  CollaborationUser[]
 }
 
 model Contest {
@@ -31,6 +41,8 @@ model Contest {
   description        String
   startTime          DateTime
   hidden             Boolean             @default(true)
+  deleted            Boolean             @default(false)
+  deletedAt          DateTime?
   submissions        Submission[]
   endTime            DateTime
   createdAt          DateTime            @default(now())
@@ -38,6 +50,12 @@ model Contest {
   problems           ContestProblem[]
   contestSubmissions ContestSubmission[]
   leaderboard        Boolean             @default(false)
+  creatorId          String?
+  creator            User?               @relation(fields: [creatorId], references: [id])
+  // Add these new fields
+  isPrivate          Boolean             @default(false)
+  inviteCode         String?             @unique @default(cuid())
+  invitedUsers       InvitedUser[]
 }
 
 model ContestProblem {
@@ -68,6 +86,8 @@ model Problem {
   contests           ContestProblem[]
   submissions        Submission[]
   defaultCode        DefaultCode[]
+  // Remove this collaboration-related field
+  // collaborationRooms CollaborationRoom[]
 }
 
 model DefaultCode {
@@ -215,3 +235,55 @@ model submissions {
 
   @@index([token], map: "index_submissions_on_token")
 }
+
+// New model for invited users
+model InvitedUser {
+  id        String   @id @default(cuid())
+  userId    String
+  contestId String
+  user      User     @relation(fields: [userId], references: [id])
+  contest   Contest  @relation(fields: [contestId], references: [id])
+  invitedAt DateTime @default(now())
+
+  @@unique([userId, contestId])
+}
+
+// Remove these collaboration-related models
+// model CollaborationRoom {
+//   id           String              @id @default(cuid())
+//   problemId    String
+//   creatorId    String
+//   createdAt    DateTime            @default(now())
+//   updatedAt    DateTime            @updatedAt
+//   problem      Problem             @relation(fields: [problemId], references: [id], onDelete: Cascade)
+//   creator      User                @relation("RoomCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+//   participants CollaborationUser[]
+//   invitedUsers InvitedRoomUser[]
+//
+//   @@index([problemId])
+//   @@index([creatorId])
+// }
+//
+// model CollaborationUser {
+//   id       String            @id @default(cuid())
+//   userId   String
+//   roomId   String
+//   user     User              @relation("RoomParticipant", fields: [userId], references: [id], onDelete: Cascade)
+//   room     CollaborationRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+//   joinedAt DateTime          @default(now())
+//
+//   @@unique([userId, roomId])
+//   @@index([roomId])
+// }
+//
+// model InvitedRoomUser {
+//   id        String            @id @default(cuid())
+//   userId    String
+//   roomId    String
+//   user      User              @relation("RoomInvite", fields: [userId], references: [id], onDelete: Cascade)
+//   room      CollaborationRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+//   invitedAt DateTime          @default(now())
+//
+//   @@unique([userId, roomId])
+//   @@index([roomId])
+// }

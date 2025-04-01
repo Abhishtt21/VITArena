@@ -8,6 +8,15 @@ export const getContest = async (contestId: string) => {
     where: {
       id: contestId,
       hidden: false,
+      OR: [
+        { isPrivate: false },
+        { creatorId: session?.user?.id },
+        {
+          invitedUsers: {
+            some: { userId: session?.user?.id }
+          }
+        }
+      ]
     },
     include: {
       problems: {
@@ -38,12 +47,20 @@ export const getUpcomingContests = async () => {
   const contests = await db.contest.findMany({
     where: {
       hidden: false,
+      deleted: false,
       endTime: {
         gt: new Date(),
       },
     },
     orderBy: {
       startTime: "asc",
+    },
+    select: {
+      id: true,
+      title: true,
+      startTime: true,
+      endTime: true,
+      creatorId: true,
     },
   });
   return contests;
@@ -53,6 +70,7 @@ export const getExistingContests = async () => {
   const contests = await db.contest.findMany({
     where: {
       hidden: false,
+      deleted: false,
       endTime: {
         lt: new Date(),
       },
@@ -60,6 +78,16 @@ export const getExistingContests = async () => {
     orderBy: {
       startTime: "asc",
     },
+    select: {
+      id: true,
+      title: true,
+      startTime: true,
+      endTime: true,
+      creatorId: true,
+    },
   });
   return contests;
 };
+
+
+

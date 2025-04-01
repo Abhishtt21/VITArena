@@ -125,29 +125,45 @@ function SubmitProblem({
 
   async function pollWithBackoff(id: string, retries: number) {
     if (retries === 0) {
+      console.error("Max retries reached for submission:", id);
       setStatus(SubmitStatus.SUBMIT);
-      toast.error("Not able to get status ");
+      toast.error("Not able to get status");
       return;
     }
 
-    const response = await axios.get(`/api/submission/?id=${id}`);
+    try {
+      const response = await axios.get(`/api/submission/?id=${id}`);
+      console.log("Poll response details:", {
+        status: response.data.submission.status,
+        testcases: response.data.submission.testcases,
+        fullResponse: response.data
+      });
 
-    if (response.data.submission.status === "PENDING") {
-      setTestcases(response.data.submission.testcases);
-      await new Promise((resolve) => setTimeout(resolve, 2.5 * 1000));
-      pollWithBackoff(id, retries - 1);
-    } else {
-      if (response.data.submission.status === "AC") {
-        setStatus(SubmitStatus.ACCEPTED);
+      if (response.data.submission.status === "PENDING") {
         setTestcases(response.data.submission.testcases);
-        toast.success("Accepted!");
-        return;
+        await new Promise((resolve) => setTimeout(resolve, 2.5 * 1000));
+        pollWithBackoff(id, retries - 1);
       } else {
-        setStatus(SubmitStatus.FAILED);
-        toast.error("Failed :(");
-        setTestcases(response.data.submission.testcases);
-        return;
+        if (response.data.submission.status === "AC") {
+          setStatus(SubmitStatus.ACCEPTED);
+          setTestcases(response.data.submission.testcases);
+          toast.success("Accepted!");
+        } else {
+          setStatus(SubmitStatus.FAILED);
+          console.error("Submission failed with status:", response.data.submission.status);
+          console.error("Failed testcases:", response.data.submission.testcases);
+          toast.error(`Failed: ${response.data.submission.status}`);
+          setTestcases(response.data.submission.testcases);
+        }
       }
+    } catch (error: any) {
+      console.error("Polling error details:", {
+        error,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      setStatus(SubmitStatus.SUBMIT);
+      toast.error("Error checking submission status");
     }
   }
 
@@ -155,6 +171,7 @@ function SubmitProblem({
     setStatus(SubmitStatus.PENDING);
     setTestcases((t) => t.map((tc) => ({ ...tc, status: "PENDING" })));
     try {
+  
       const response = await axios.post(`/api/submission/`, {
         code: code[language],
         languageId: language,
@@ -162,10 +179,13 @@ function SubmitProblem({
         activeContestId: contestId,
         token: token,
       });
+      
+      console.log("Submission response:", response.data);
       pollWithBackoff(response.data.id, 10);
-    } catch (e) {
+    } catch (e: any) {
+      console.error("Submission error:", e);
       //@ts-ignore
-      toast.error(e.response.statusText);
+      toast.error(e.response?.statusText || "Submission failed");
       setStatus(SubmitStatus.SUBMIT);
     }
   }
@@ -271,3 +291,6 @@ function RenderTestcase({ testcases }: { testcases: SubmissionsType[] }) {
     </div>
   );
 }
+
+
+

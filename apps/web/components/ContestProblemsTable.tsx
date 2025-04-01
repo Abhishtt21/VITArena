@@ -120,10 +120,16 @@ function ProblemRow({
         </div>
       </TableCell>
       <TableCell>
-        <Link href={`/contest/${contestId}/problem/${id}`}>
-          <Button className="w-full">Solve</Button>
-        </Link>
+        {points > 0 ? (
+          <div className="text-green-500 font-medium text-center">Solved</div>
+        ) : (
+          <Link href={`/contest/${contestId}/problem/${id}`}>
+            <Button className="w-full">Solve</Button>
+          </Link>
+        )}
       </TableCell>
     </TableRow>
   );
 }
+
+export default ContestProblemsTable;
