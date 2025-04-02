@@ -133,14 +133,14 @@ function SubmitProblem({
 
     try {
       const response = await axios.get(`/api/submission/?id=${id}`);
-      console.log("Detailed testcase results:", response.data.submission.testcases.map(testcase => ({
+      /*console.log("Detailed testcase results:", response.data.submission.testcases.map(testcase : any => ({
         status_id: testcase.status_id,
         stdout: testcase.stdout,
         stderr: testcase.stderr,
         compile_output: testcase.compile_output,
         message: testcase.message
       })));
-
+*/
       if (response.data.submission.status === "PENDING") {
         setTestcases(response.data.submission.testcases);
         await new Promise((resolve) => setTimeout(resolve, 2.5 * 1000));
@@ -152,11 +152,11 @@ function SubmitProblem({
           toast.success("Accepted!");
         } else {
           setStatus(SubmitStatus.FAILED);
-          const failedTestcase = response.data.submission.testcases.find(t => t.status_id !== 3);
-          const errorMessage = failedTestcase ? 
+        //  const failedTestcase = response.data.submission.testcases.find(t => t.status_id !== 3);
+         /* const errorMessage = failedTestcase ? 
             `Failed: ${failedTestcase.message || failedTestcase.compile_output || failedTestcase.stderr || 'Unknown error'}` :
             `Failed: ${response.data.submission.status}`;
-          toast.error(errorMessage);
+          toast.error(errorMessage);*/
           setTestcases(response.data.submission.testcases);
         }
       }
