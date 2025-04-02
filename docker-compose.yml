@@ -38,31 +38,29 @@ services:
       driver: none
 
   server:
-    image: judge0/judge0:1.13.1
+    image: judge0/judge0:latest
     volumes:
       - ./judge0.conf:/judge0.conf:ro
       - type: bind
-        source: "C:/Users/abhis/Downloads/algorithmic-arena-main/algorithmic-arena-main/apps/problems"
+        source: "/home/ubuntu/VITArena/apps/problems"
         target: /dev/problems
     ports:
       - "2358:2358"
     privileged: true
     restart: always
-    logging:
-      driver: none
+    
 
   workers:
-    image: judge0/judge0:1.13.1
+    image: judge0/judge0:latest
     command: [ "./scripts/workers" ]
     volumes:
       - ./judge0.conf:/judge0.conf:ro
       - type: bind
-        source: "C:/Users/abhis/Downloads/algorithmic-arena-main/algorithmic-arena-main/apps/problems"
+        source: "/home/ubuntu/VITArena/apps/problems"
         target: /dev/problems
     privileged: true
     restart: always
-    logging:
-      driver: none
+    
 
   redis:
     image: redis:7.2.4

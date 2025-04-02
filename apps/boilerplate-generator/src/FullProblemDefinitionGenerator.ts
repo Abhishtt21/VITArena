@@ -73,7 +73,7 @@ export class FullProblemDefinitionParser {
 ##USER_CODE_HERE##
 
 int main() {
-  std::ifstream file("C:/Users/abhis/Downloads/algorithmic-arena-main/algorithmic-arena-main/apps/problems/${this.problemName.toLowerCase().replace(" ", "-")}/tests/inputs/##INPUT_FILE_INDEX##.txt");
+  std::ifstream file("/dev/problems/${this.problemName.toLowerCase().replace(" ", "-")}/tests/inputs/##INPUT_FILE_INDEX##.txt");
   std::vector<std::string> lines;
   std::string line;
   while (std::getline(file, line)) lines.push_back(line);
@@ -133,7 +133,7 @@ public class Main {
     ##USER_CODE_HERE##
 
     public static void main(String[] args) {
-        String filePath = "C:/Users/abhis/Downloads/algorithmic-arena-main/algorithmic-arena-main/apps/problems/${this.problemName.toLowerCase().replace(" ", "-")}/tests/inputs/##INPUT_FILE_INDEX##.txt"; 
+        String filePath = "/dev/problems/${this.problemName.toLowerCase().replace(" ", "-")}/tests/inputs/##INPUT_FILE_INDEX##.txt"; 
         List<String> lines = readLinesFromFile(filePath);
         ${inputReads}
         ${functionCall}
@@ -171,7 +171,7 @@ public class Main {
 
     return `##USER_CODE_HERE##
 
-const input = require('fs').readFileSync('C:/Users/abhis/Downloads/algorithmic-arena-main/algorithmic-arena-main/apps/problems/${this.problemName.toLowerCase().replace(" ", "-")}/tests/inputs/##INPUT_FILE_INDEX##.txt', 'utf8').trim().split('\\n').join(' ').split(' ');
+const input = require('fs').readFileSync('/dev/problems/${this.problemName.toLowerCase().replace(" ", "-")}/tests/inputs/##INPUT_FILE_INDEX##.txt', 'utf8').trim().split('\\n').join(' ').split(' ');
 ${inputReads}
 ${functionCall}
 ${outputWrite}
@@ -205,7 +205,7 @@ use std::str::Lines;
 ##USER_CODE_HERE##
 
 fn main() -> io::Result<()> {
-  let input = read_to_string("C:/Users/abhis/Downloads/algorithmic-arena-main/algorithmic-arena-main/apps/problems/${this.problemName.toLowerCase().replace(" ", "-")}/tests/inputs/##INPUT_FILE_INDEX##.txt")?;
+  let input = read_to_string("/dev/problems/${this.problemName.toLowerCase().replace(" ", "-")}/tests/inputs/##INPUT_FILE_INDEX##.txt")?;
   let mut lines = input.lines();
   ${inputReads}
   ${functionCall}

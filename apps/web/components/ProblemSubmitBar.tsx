@@ -133,11 +133,13 @@ function SubmitProblem({
 
     try {
       const response = await axios.get(`/api/submission/?id=${id}`);
-      console.log("Poll response details:", {
-        status: response.data.submission.status,
-        testcases: response.data.submission.testcases,
-        fullResponse: response.data
-      });
+      console.log("Detailed testcase results:", response.data.submission.testcases.map(testcase => ({
+        status_id: testcase.status_id,
+        stdout: testcase.stdout,
+        stderr: testcase.stderr,
+        compile_output: testcase.compile_output,
+        message: testcase.message
+      })));
 
       if (response.data.submission.status === "PENDING") {
         setTestcases(response.data.submission.testcases);
@@ -150,9 +152,11 @@ function SubmitProblem({
           toast.success("Accepted!");
         } else {
           setStatus(SubmitStatus.FAILED);
-          console.error("Submission failed with status:", response.data.submission.status);
-          console.error("Failed testcases:", response.data.submission.testcases);
-          toast.error(`Failed: ${response.data.submission.status}`);
+          const failedTestcase = response.data.submission.testcases.find(t => t.status_id !== 3);
+          const errorMessage = failedTestcase ? 
+            `Failed: ${failedTestcase.message || failedTestcase.compile_output || failedTestcase.stderr || 'Unknown error'}` :
+            `Failed: ${response.data.submission.status}`;
+          toast.error(errorMessage);
           setTestcases(response.data.submission.testcases);
         }
       }

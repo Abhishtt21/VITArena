@@ -5,7 +5,7 @@ import {getUserRole} from "../../lib/user";
 import fs from 'fs';
 import path from 'path';
 import { spawn } from 'child_process';
-import { db } from "../../db"; // Ensure the correct import path
+import { db } from "../../db";
 
 interface Field {
   type: string;
@@ -13,7 +13,7 @@ interface Field {
 }
 
 export async function POST(req: NextRequest) {
-    // Uncomment and use session validation if needed
+    // Session validation remains the same
     const session = await getServerSession(authOptions);
     if (!session?.user) {
         return NextResponse.json({
@@ -23,7 +23,6 @@ export async function POST(req: NextRequest) {
         });
     }
 
-    // Check if the user is an admin
     const userRole = await getUserRole(session.user.id);
     if (userRole !== 'ADMIN') {
         console.log(session.user);
@@ -36,7 +35,7 @@ export async function POST(req: NextRequest) {
 
     const { title, description, difficulty, slug, testCases, functionName, inputFields, outputFields } = await req.json();
 
-    // Format the problem description with test cases
+    // Format description remains the same
     const formattedDescription = `
 ### ${title}
 
@@ -56,9 +55,9 @@ Output
 \`\`\`
 ${tc.output}
 \`\`\`
-`).join('\n')}`.trim(); // Ensure there are no trailing spaces
+`).join('\n')}`.trim();
 
-    // Insert the problem into the database
+    // Database insertion remains the same
     try {
         const problem = await db.problem.create({
             data: {
@@ -79,12 +78,12 @@ ${tc.output}
         });
     }
 
-    // Correct the problem directory path
-    const problemDir = path.join('C:/Users/abhis/Downloads/algorithmic-arena-main/algorithmic-arena-main/apps/problems', slug);
+    // Update the problem directory path for Ubuntu
+    const problemDir = path.join(process.env.MOUNT_PATH || '/home/ubuntu/VITArena/apps/problems', slug);
     try {
         fs.mkdirSync(problemDir, { recursive: true });
 
-        // Create structure.md file
+        // File creation remains the same
         const structureMdContent = `Problem Name: "${title}"
 Function Name: ${functionName}
 Input Structure:
@@ -93,25 +92,16 @@ Output Structure:
 ${outputFields.map((field: Field) => `Output Field: ${field.type} ${field.name}`).join('\n')}
 `;
         fs.writeFileSync(path.join(problemDir, 'structure.md'), structureMdContent);
+        fs.writeFileSync(path.join(problemDir, 'Problem.md'), formattedDescription);
 
-        // Create Problem.md file
-        const problemMdContent = formattedDescription;
-        fs.writeFileSync(path.join(problemDir, 'Problem.md'), problemMdContent);
-
-        // Save test cases and outputs
         const inputsDir = path.join(problemDir, 'tests/inputs');
         const outputsDir = path.join(problemDir, 'tests/outputs');
         fs.mkdirSync(inputsDir, { recursive: true });
         fs.mkdirSync(outputsDir, { recursive: true });
 
         for (const [index, testCase] of testCases.entries()) {
-            const { input, output } = testCase;
-
-            // Save input
-            fs.writeFileSync(path.join(inputsDir, `${index}.txt`), input);
-
-            // Save output
-            fs.writeFileSync(path.join(outputsDir, `${index}.txt`), output);
+            fs.writeFileSync(path.join(inputsDir, `${index}.txt`), testCase.input);
+            fs.writeFileSync(path.join(outputsDir, `${index}.txt`), testCase.output);
         }
     } catch (error: any) {
         console.error(`Error creating files: ${error.message}`);
@@ -122,19 +112,17 @@ ${outputFields.map((field: Field) => `Output Field: ${field.type} ${field.name}`
         });
     }
 
-    // Call the boilerplate-generator service to generate boilerplate code
+    // Update paths and commands for Ubuntu
     try {
-        const generatorScript = `node dist/index.js`;
-        const generatorProcess = spawn(generatorScript, {
-            cwd: path.resolve('C:/Users/abhis/Downloads/algorithmic-arena-main/algorithmic-arena-main/apps/boilerplate-generator'),
+        const generatorProcess = spawn('node', ['dist/index.js'], {
+            cwd: path.resolve('/home/ubuntu/VITArena/apps/boilerplate-generator'),
             env: {
                 ...process.env,
                 GENERATOR_FILE_PATH: `../../problems/${slug}`
             },
-            shell: true
         });
 
-        generatorProcess.stdout.on('data', (data:   any) => {
+        generatorProcess.stdout.on('data', (data: any) => {
             console.log(`stdout: ${data}`);
         });
 
@@ -153,11 +141,10 @@ ${outputFields.map((field: Field) => `Output Field: ${field.type} ${field.name}`
             }
             console.log('Boilerplate code generated successfully');
 
-            // Run the updateQuestion.ts script to update the database
+            // Update the database update script command for Ubuntu
             try {
-                const updateScript = `pnpm dlx ts-node prisma/updateQuestion.ts`;
-                const updateProcess = spawn(updateScript, {
-                    cwd: path.resolve('C:/Users/abhis/Downloads/algorithmic-arena-main/algorithmic-arena-main/packages/db'),
+                const updateProcess = spawn('pnpm', ['dlx', 'ts-node', 'prisma/updateQuestion.ts'], {
+                    cwd: path.resolve('/home/ubuntu/VITArena/packages/db'),
                     shell: true
                 });
 

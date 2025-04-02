@@ -4,7 +4,7 @@ import path from "path";
 import prismaClient from "../src";
 
 const prisma = prismaClient;
-const MOUNT_PATH = process.env.MOUNT_PATH ?? "C:/Users/abhis/Downloads/algorithmic-arena-main/algorithmic-arena-main/apps/problems";
+const MOUNT_PATH = process.env.MOUNT_PATH ?? "/home/ubuntu/VITArena/apps/problems";
 
 async function main(problemSlug: string, problemTitle: string) {
   console.log(`Updating problem: ${problemSlug} - ${problemTitle}`);
