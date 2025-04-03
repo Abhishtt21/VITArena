@@ -10,7 +10,10 @@
     "./select": "./src/@/components/ui/select.tsx",
     "./label": "./src/@/components/ui/label.tsx",
     "./textarea": "./src/@/components/ui/textarea.tsx",
-    "./tabs": "./src/@/components/ui/tabs.tsx"
+    "./tabs": "./src/@/components/ui/tabs.tsx",
+    "./dropdown-menu": "./src/@/components/ui/dropdown-menu.tsx",
+    "./skeleton": "./src/@/components/ui/skeleton.tsx"
+
   },
   "scripts": {
     "lint": "eslint . --max-warnings 0",

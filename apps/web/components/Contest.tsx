@@ -15,6 +15,7 @@ interface ContestProps {
     description: string;
     creatorId: string | null;
     isPrivate: boolean;
+    startTime: string;
     endTime: string;
     problems: {
       problem: {
@@ -45,7 +46,11 @@ export function Contest({ id, initialContest }: ContestProps) {
   return (
     <div className="grid grid-flow-row-dense gap-4 grid-cols md:grid-cols-12 gap-4 grid-cols-1 min-h-screen px-2 md:px-12">
       <div className="col-span-9">
-        <ContestProblemsTable contest={initialContest} />
+        <ContestProblemsTable contest={{
+          ...initialContest,
+          // Ensure we're passing a valid date string
+          startTime: initialContest.startTime ? new Date(initialContest.startTime).toISOString() : ""
+        }} />
         {isCreator && initialContest.isPrivate && (
           <InviteUsers contestId={initialContest.id} />
         )}
@@ -66,6 +71,14 @@ export function Contest({ id, initialContest }: ContestProps) {
     </div>
   );
 }
+
+
+
+
+
+
+
+
 
 
 

@@ -28,11 +28,11 @@ export async function updateMemoryAndExecutionTime(
         status: accepted ? "AC" : "REJECTED",
         time: Math.max(
           ...submission.testcases.map((testcase) =>
-            Number(testcase.time || "0")
+            Number(testcase.time ?? "0")
           )
         ),
         memory: Math.max(
-          ...submission.testcases.map((testcase) => testcase.memory || 0)
+          ...submission.testcases.map((testcase) => testcase.memory ?? 0)
         ),
       },
       include: {
@@ -45,49 +45,106 @@ export async function updateMemoryAndExecutionTime(
 }
 
 export async function updateContest(submission: SubmissionWithTestcases) {
-  var contestSubmission = await db.submission.findUnique({
-    where: {
-      id: submission.id,
-    },
+  const contestSubmission = await db.submission.findUnique({
+    where: { id: submission.id },
     include: {
       activeContest: true,
       problem: true,
     },
   });
-  if (
-    !contestSubmission ||
-    !contestSubmission.activeContestId ||
-    !contestSubmission.activeContest?.startTime ||
-    !submission.activeContestId
-  )
-    return;
 
+  if (!contestSubmission?.activeContestId || !contestSubmission.activeContest?.startTime) return;
+
+  // Calculate and update points for this submission
   const points = await getPoints(
     contestSubmission.activeContestId,
     contestSubmission.userId,
     contestSubmission.problemId,
     contestSubmission.problem.difficulty,
-    contestSubmission.activeContest?.startTime,
-    contestSubmission.activeContest?.endTime
+    contestSubmission.activeContest.startTime,
+    contestSubmission.activeContest.endTime
   );
 
+  const contestId = contestSubmission.activeContestId;
+
+  // Update or create contest submission
   await db.contestSubmission.upsert({
     where: {
       userId_problemId_contestId: {
-        contestId: submission.activeContestId,
-        userId: submission.userId,
-        problemId: submission.problemId,
+        userId: contestSubmission.userId,
+        problemId: contestSubmission.problemId,
+        contestId,
       },
     },
+    update: { points },
     create: {
+      userId: contestSubmission.userId,
+      problemId: contestSubmission.problemId,
+      contestId,
+      points,
       submissionId: submission.id,
-      userId: submission.userId,
-      problemId: submission.problemId,
-      contestId: submission.activeContestId,
-      points,
-    },
-    update: {
-      points,
     },
   });
+
+  // Efficiently update leaderboard in a single transaction
+  await db.$transaction(async (tx) => {
+    // Get all submissions for this contest
+    const contestSubmissions = await tx.contestSubmission.groupBy({
+      by: ['userId'],
+      where: { contestId },
+      _sum: { points: true },
+    });
+
+    // Prepare bulk upsert data
+    const pointsData = contestSubmissions.map(group => ({
+      userId: group.userId,
+      points: group._sum?.points ?? 0,
+      contestId,
+    }));
+
+    // Bulk upsert points
+    for (const data of pointsData) {
+      await tx.contestPoints.upsert({
+        where: {
+          contestId_userId: {
+            contestId: data.contestId,
+            userId: data.userId,
+          },
+        },
+        update: { points: data.points },
+        create: {
+          contestId: data.contestId,
+          userId: data.userId,
+          points: data.points,
+          rank: 0, // Will be updated in next step
+        },
+      });
+    }
+
+    // Update ranks efficiently
+    const sortedPoints = await tx.contestPoints.findMany({
+      where: { contestId },
+      orderBy: { points: 'desc' },
+    });
+
+    // Bulk update ranks
+    await Promise.all(
+      sortedPoints.map((point, index) =>
+        tx.contestPoints.update({
+          where: { id: point.id },
+          data: { rank: index + 1 },
+        })
+      )
+    );
+
+    // Update contest leaderboard flag if not already set
+    if (contestId) {  // Add null check
+      await tx.contest.update({
+        where: { id: contestId },
+        data: { leaderboard: true },
+      });
+    }
+  });
 }
+
+

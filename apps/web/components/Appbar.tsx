@@ -6,6 +6,15 @@ import { signIn } from "next-auth/react";
 import { Button } from "@repo/ui/button";
 import { CodeIcon } from "./Icon";
 import { ModeToggle } from "./ModeToggle";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@repo/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@repo/ui/avatar";
+
 export function Appbar() {
   const { data: session, status: sessionStatus } = useSession();
   const isLoading = sessionStatus === "loading";
@@ -30,19 +39,45 @@ export function Appbar() {
       {!isLoading && session?.user && (
         <div className="flex items-center gap-4">
           <ModeToggle />
-          <Button onClick={() => signOut()}>Logout</Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="relative flex items-center gap-2">
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback>
+                    {session.user.name?.charAt(0).toUpperCase() || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+                <span>{session.user.name}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end">
+              <DropdownMenuItem>
+                <Link href="/profile" className="w-full">Profile</Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                Role: {session.user.role || 'User'}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => signOut()}>
+                Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       )}
 
       {!isLoading && !session?.user && (
         <div className="flex items-center gap-4">
-        <ModeToggle />
-        <Button onClick={() => signIn(undefined, { callbackUrl: "/auth/signin" })}>Sign in</Button>
+          <ModeToggle />
+          <Button onClick={() => signIn(undefined, { callbackUrl: "/auth/signin" })}>
+            Sign in
+          </Button>
         </div>
-      
       )}
 
       {isLoading && <div className="flex items-center gap-4"></div>}
     </header>
   );
 }
+

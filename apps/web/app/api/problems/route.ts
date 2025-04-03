@@ -91,7 +91,7 @@ ${inputFields.map((field: Field) => `Input Field: ${field.type} ${field.name}`).
 Output Structure:
 ${outputFields.map((field: Field) => `Output Field: ${field.type} ${field.name}`).join('\n')}
 `;
-        fs.writeFileSync(path.join(problemDir, 'structure.md'), structureMdContent);
+        fs.writeFileSync(path.join(problemDir, 'Structure.md'), structureMdContent);
         fs.writeFileSync(path.join(problemDir, 'Problem.md'), formattedDescription);
 
         const inputsDir = path.join(problemDir, 'tests/inputs');

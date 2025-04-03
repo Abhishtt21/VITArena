@@ -9,6 +9,31 @@ import {
   TableCell,
 } from "@repo/ui/table";
 import { CheckIcon } from "lucide-react";
+import { useMemo } from "react";
+import { format } from "date-fns";
+
+interface ContestProblem {
+  problem: {
+    id: string;
+    title: string;
+    difficulty: string;
+    solved: number;
+  };
+}
+
+interface Contest {
+  id: string;
+  title: string;
+  description: string;
+  startTime: Date | string;
+  problems: ContestProblem[];
+  contestSubmissions: {
+    userId: string;
+    problemId: string;
+    contestId: string;
+    points: number;
+  }[];
+}
 
 interface ProblemRowProps {
   id: string;
@@ -22,26 +47,41 @@ interface ProblemRowProps {
 export const ContestProblemsTable = ({
   contest,
 }: {
-  contest: {
-    title: string;
-    description: string;
-    id: string;
-    problems: {
-      problem: {
-        id: string;
-        title: string;
-        difficulty: string;
-        solved: number;
-      };
-    }[];
-    contestSubmissions: {
-      userId: string;
-      problemId: string;
-      contestId: string;
-      points: number;
-    }[];
-  };
+  contest: Contest;
 }) => {
+  const canViewProblems = useMemo(() => {
+    if (!contest?.startTime) return false;
+    
+    const now = new Date();
+    // Remove the console.log that was causing the error
+    // and add safer date parsing
+    const startTimeDate = typeof contest.startTime === 'string' 
+      ? new Date(contest.startTime)
+      : contest.startTime;
+    
+    console.log('Current time:', now.toISOString());
+    // Only log if we have a valid date
+    if (startTimeDate instanceof Date && !isNaN(startTimeDate.getTime())) {
+      console.log('Start time:', startTimeDate.toISOString());
+    }
+    
+    return now >= startTimeDate;
+  }, [contest?.startTime]);
+
+  if (!canViewProblems) {
+    return (
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-6">
+        <div className="text-center py-8">
+          <h3 className="text-lg font-semibold mb-2">Problems Not Available Yet</h3>
+          <p className="text-gray-600 dark:text-gray-400">
+            Problems will be visible when the contest starts at{" "}
+            {format(new Date(contest.startTime), "PPpp")}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col">
       <main className="flex-1 py-8 md:py-12">
@@ -64,17 +104,17 @@ export const ContestProblemsTable = ({
                 <TableBody>
                   {contest.problems.map(({ problem }) => (
                     <ProblemRow
-                      points={
-                        contest.contestSubmissions.find(
-                          (submission) => submission.problemId === problem.id,
-                        )?.points || 0
-                      }
-                      contestId={contest.id}
                       key={problem.id}
                       id={problem.id}
                       title={problem.title}
                       difficulty={problem.difficulty}
                       submissionCount={problem.solved}
+                      contestId={contest.id}
+                      points={
+                        contest.contestSubmissions.find(
+                          (submission) => submission.problemId === problem.id
+                        )?.points || 0
+                      }
                     />
                   ))}
                 </TableBody>
@@ -133,3 +173,8 @@ function ProblemRow({
 }
 
 export default ContestProblemsTable;
+
+
+
+
+

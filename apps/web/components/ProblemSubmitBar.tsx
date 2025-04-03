@@ -133,14 +133,14 @@ function SubmitProblem({
 
     try {
       const response = await axios.get(`/api/submission/?id=${id}`);
-      /*console.log("Detailed testcase results:", response.data.submission.testcases.map(testcase : any => ({
+    /*  console.log("Detailed testcase results:", response.data.submission.testcases.map(testcase => ({
         status_id: testcase.status_id,
         stdout: testcase.stdout,
         stderr: testcase.stderr,
         compile_output: testcase.compile_output,
         message: testcase.message
-      })));
-*/
+      })));*/
+
       if (response.data.submission.status === "PENDING") {
         setTestcases(response.data.submission.testcases);
         await new Promise((resolve) => setTimeout(resolve, 2.5 * 1000));
@@ -152,11 +152,11 @@ function SubmitProblem({
           toast.success("Accepted!");
         } else {
           setStatus(SubmitStatus.FAILED);
-        //  const failedTestcase = response.data.submission.testcases.find(t => t.status_id !== 3);
-         /* const errorMessage = failedTestcase ? 
+          const failedTestcase = response.data.submission.testcases.find((t: {status_id: number}) => t.status_id !== 3);
+          const errorMessage = failedTestcase ? 
             `Failed: ${failedTestcase.message || failedTestcase.compile_output || failedTestcase.stderr || 'Unknown error'}` :
             `Failed: ${response.data.submission.status}`;
-          toast.error(errorMessage);*/
+          toast.error(errorMessage);
           setTestcases(response.data.submission.testcases);
         }
       }
@@ -173,9 +173,23 @@ function SubmitProblem({
 
   async function submit() {
     setStatus(SubmitStatus.PENDING);
-    setTestcases((t) => t.map((tc) => ({ ...tc, status: "PENDING" })));
+    setTestcases((t: any) => t.map((tc: any) => ({ ...tc, status: "PENDING" })));
     try {
-  
+      // Add time validation check
+      if (contestId) {
+        const now = new Date();
+        const contest = await fetch(`/api/contests/${contestId}`).then(res => res.json());
+        const startTime = new Date(contest.startTime);
+        const endTime = new Date(contest.endTime);
+        
+        if (now < startTime) {
+          throw new Error("Contest hasn't started yet");
+        }
+        if (now > endTime) {
+          throw new Error("Contest has ended");
+        }
+      }
+
       const response = await axios.post(`/api/submission/`, {
         code: code[language],
         languageId: language,
@@ -189,7 +203,7 @@ function SubmitProblem({
     } catch (e: any) {
       console.error("Submission error:", e);
       //@ts-ignore
-      toast.error(e.response?.statusText || "Submission failed");
+      toast.error(e.response?.statusText || e.message || "Submission failed");
       setStatus(SubmitStatus.SUBMIT);
     }
   }
@@ -295,6 +309,8 @@ function RenderTestcase({ testcases }: { testcases: SubmissionsType[] }) {
     </div>
   );
 }
+
+
 
 
 

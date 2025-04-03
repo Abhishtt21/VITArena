@@ -17,6 +17,7 @@ export default async function ContestPage({ params }: { params: { id: string } }
     title: contest.title,           // Added title
     description: contest.description, // Added description
     creatorId: contest.creatorId,
+    startTime: contest.startTime.toISOString(),
     isPrivate: contest.isPrivate,
     endTime: contest.endTime.toISOString(),
     problems: contest.problems.map(problem => ({

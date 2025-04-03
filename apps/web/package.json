@@ -23,6 +23,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "concurrently": "^9.1.2",
+    "date-fns": "^4.1.0",
     "framer-motion": "^12.5.0",
     "ioredis": "^5.4.1",
     "jose": "^5.4.1",

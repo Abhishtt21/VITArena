@@ -25,13 +25,21 @@ export default function JoinContest({ params }: { params: { code: string } }) {
         method: 'POST'
       });
 
-      if (!response.ok) throw new Error('Failed to join contest');
-      
       const data = await response.json();
+      
+      if (!response.ok) {
+        console.error('Join contest failed:', {
+          status: response.status,
+          data
+        });
+        throw new Error(data.message || 'Failed to join contest');
+      }
+      
       toast.success('Successfully joined the contest');
       router.push(`/contest/${data.contestId}`);
-    } catch (error) {
-      toast.error('Failed to join the contest');
+    } catch (error: any) {
+      console.error('Join contest error:', error);
+      toast.error(error.message || 'Failed to join the contest');
     } finally {
       setIsJoining(false);
     }
@@ -63,3 +71,4 @@ export default function JoinContest({ params }: { params: { code: string } }) {
     </div>
   );
 }
+
